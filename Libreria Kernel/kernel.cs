@@ -23,24 +23,18 @@ namespace Libreria_Kernel
         /// </summary>
         public static void LeerNumSerie()
         {
-            string numeroSerial;
+            string numeroSerial = ExtraerSerial(@"C:");
 
 
-
-
-            numeroSerial = GetSerialNumber(@"C:");
-
-
-            private string GetSerialNumber(string partition)
+            string ExtraerSerial(string particion)
             {
-                return GetHDDSerial(GetModelFromPartition(partition));
+                return ExtraerHddSerial(ExtraerModelo(particion));
             }
 
-
-            private string GetModelFromPartition(string partition)
+            string ExtraerModelo(string particion)
             {
-                string model = "";
-                if (partition.Length != 2)
+                string modelo = "";
+                if (particion.Length != 2)
                 {
                     return "";
                 }
@@ -49,7 +43,7 @@ namespace Libreria_Kernel
                     try
                     {
                         using (var par = new ManagementObjectSearcher("ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='" +
-                            partition + "'} WHERE ResultClass=Win32_DiskPartition"))
+                            particion + "'} WHERE ResultClass=Win32_DiskPartition"))
                         {
                             foreach (var p in par.Get())
                             {
@@ -58,7 +52,7 @@ namespace Libreria_Kernel
                                 {
                                     foreach (var _drive in drive.Get())
                                     {
-                                        model = (string)_drive["Model"];
+                                        modelo = (string)_drive["Model"];
                                     }
                                 }
                             }
@@ -66,54 +60,50 @@ namespace Libreria_Kernel
                     }
                     catch (Exception ex)
                     {
-                        return "<unknown>";
+                        return "<desconocido>";
                     }
+                    return modelo;
                 }
-                return model;
             }
 
-
-            private string GetHDDSerial(string Model)
+            string ExtraerHddSerial(string modelo)
             {
-                string HDDSerial = "";
-                List<Hardisk> hdList = new List<Hardisk>();
-                ManagementObjectSearcher search = new ManagementObjectSearcher("Select * From Win32_DiskDrive");
-                foreach (var mHD in search.Get())
+                string hddSerial = "";
+                List<Disco> hdList = new List<Disco>();
+                ManagementObjectSearcher buscar = new ManagementObjectSearcher("Select * From Win32_DiskDrive");
+                foreach (var mHD in buscar.Get())
                 {
-                    Hardisk HD = new Hardisk();
-                    HD.DeviceID = mHD["DeviceID"].ToString();
-                    HD.Model = mHD["Model"].ToString();
-                    HD.Type = mHD["InterfaceType"].ToString();
-                    if (HD.Type.ToUpper() != "USB")
-                        HD.SerialNumber = mHD["SerialNumber"].ToString();
-                    hdList.Add(HD);
+                    Disco hd = new Disco();
+                    hd.DeviceID = mHD["DeviceID"].ToString();
+                    hd.modelo = mHD["Model"].ToString();
+                    hd.tipo = mHD["InterfaceType"].ToString();
+                    if (hd.tipo.ToUpper() != "USB")
+                        hd.numeroSerial = mHD["SerialNumber"].ToString();
+                    hdList.Add(hd);
                 }
-
 
                 foreach (var hdd in hdList)
                 {
-                    if (hdd.Model == Model)
-                        HDDSerial = hdd.SerialNumber;
+                    if (hdd.modelo == modelo)
+                        hddSerial = hdd.numeroSerial;
                 }
-                return HDDSerial;
+                return hddSerial;
             }
 
-
-            DateTime date = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            txt_serialNumber.Text = date.ToString();
-
-
+            Console.WriteLine("El serial del disco local C, es: " + numeroSerial);
 
         }
 
-        internal class Hardisk
+        
+
+internal class Disco
         {
             public string DeviceID { get; set; }
-            public string Model { get; set; }
-            public string Type { get; set; }
-            public string SerialNumber { get; set; }
+            public string modelo { get; set; }
+            public string tipo { get; set; }
+            public string numeroSerial { get; set; }
         }
-    }
+
         public static void CantidadUnidadesDisco()
         {
             DriveInfo[] allDrives = DriveInfo.GetDrives();//Clase de Discos, donde guarda cada disco en un Array con toda la informacion
